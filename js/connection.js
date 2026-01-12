@@ -83,6 +83,9 @@ const Connection = {
         console.log(`New connection from ${conn.peer}`);
         UI.showToast(`มีการเชื่อมต่อใหม่จาก...`, 'info'); // Debug
 
+        // Register connection immediately
+        this.connections.push(conn);
+
         conn.on('data', (data) => {
             console.log('Received data:', data); // Debug
             this.handleMessage(data, conn);
@@ -90,7 +93,6 @@ const Connection = {
 
         conn.on('open', () => {
             // Connection established
-            // Wait for 'player_join' message
         });
 
         conn.on('close', () => {
@@ -100,8 +102,23 @@ const Connection = {
         conn.on('error', (err) => {
             console.error('Connection error:', err);
         });
+    },
 
-        this.connections.push(conn);
+    // Helper to send state to specific connection
+    sendState(conn) {
+        if (!conn) return;
+        const message = {
+            type: 'state_sync',
+            data: { state: GameState.getStateForSync() },
+            timestamp: Date.now()
+        };
+
+        // Try to send if open, or if we just received data (which implies it's open enough)
+        if (conn.open) {
+            conn.send(message);
+        } else {
+            console.warn('Cannot send state, connection not open');
+        }
     },
 
     // Handle disconnection
@@ -309,6 +326,11 @@ const Connection = {
 
         // Update UI
         UI.updateLobbyPlayers(GameState.state.players);
+
+        // Send state specifically to the joining player (Critical fix)
+        if (conn) {
+            this.sendState(conn);
+        }
 
         // Broadcast updated state to ALL
         this.broadcastState();
