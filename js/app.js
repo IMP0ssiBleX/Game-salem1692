@@ -118,7 +118,7 @@ const App = {
             if (err.type === 'peer-unavailable') {
                 msg = 'ไม่พบรหัสห้องนี้ (หรือโฮสต์ยังไม่ได้สร้างห้อง)';
             } else if (err.message === 'Connection timed out') {
-                msg = 'หมดเวลาเชื่อมต่อ (อินเทอร์เน็ตช้าหรือโฮสต์ไม่อยู่)';
+                msg = 'หมดเวลาเชื่อมต่อ (ลองใหม่อีกครั้ง หรือตรวจสอบว่า Host ยังอยู่หรือไม่)';
             }
 
             UI.showToast(msg, 'error');
