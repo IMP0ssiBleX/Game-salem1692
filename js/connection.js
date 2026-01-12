@@ -22,6 +22,18 @@ const Connection = {
     // Message handlers
     handlers: {},
 
+    // PeerJS Configuration with STUN servers
+    peerConfig: {
+        debug: 2,
+        config: {
+            iceServers: [
+                { urls: 'stun:stun.l.google.com:19302' },
+                { urls: 'stun:stun1.l.google.com:19302' },
+                { urls: 'stun:stun2.l.google.com:19302' }
+            ]
+        }
+    },
+
     // Initialize connection
     init() {
         console.log('Connection System Initialized (PeerJS)');
@@ -36,13 +48,14 @@ const Connection = {
         try {
             // Create Peer with specific ID
             const peerId = this.prefix + roomCode;
-            this.peer = new Peer(peerId);
+            this.peer = new Peer(peerId, this.peerConfig);
 
             this.peer.on('open', (id) => {
                 console.log(`Room created with ID: ${id}`);
                 this.isConnected = true;
                 UI.showToast(`ห้องสร้างเสร็จแล้ว! รหัส: ${roomCode}`, 'success');
             });
+
 
             this.peer.on('connection', (conn) => {
                 this.handleIncomingConnection(conn);
@@ -68,8 +81,10 @@ const Connection = {
     // Handle incoming connection (Host side)
     handleIncomingConnection(conn) {
         console.log(`New connection from ${conn.peer}`);
+        UI.showToast(`มีการเชื่อมต่อใหม่จาก...`, 'info'); // Debug
 
         conn.on('data', (data) => {
+            console.log('Received data:', data); // Debug
             this.handleMessage(data, conn);
         });
 
@@ -80,6 +95,10 @@ const Connection = {
 
         conn.on('close', () => {
             this.handleDisconnect(conn);
+        });
+
+        conn.on('error', (err) => {
+            console.error('Connection error:', err);
         });
 
         this.connections.push(conn);
@@ -101,7 +120,7 @@ const Connection = {
 
         try {
             // Create anonymous peer
-            this.peer = new Peer();
+            this.peer = new Peer(null, this.peerConfig);
 
             this.peer.on('open', (id) => {
                 console.log(`Connected to PeerServer as ${id}`);
@@ -274,6 +293,7 @@ const Connection = {
     onPlayerJoin(data, conn) {
         if (this.type !== this.TYPE.HOST) return;
 
+        console.log('Handling player join:', data); // Debug
         const { playerId, playerName } = data;
 
         // Add player if not exists
@@ -282,14 +302,13 @@ const Connection = {
             player = GameState.createPlayer(playerId, playerName, false);
             player.id = playerId; // Force ID from client
             GameState.state.players.push(player);
+            UI.showToast(`ผู้เล่นใหม่เข้าร่วม: ${playerName}`, 'success');
+        } else {
+            UI.showToast(`${playerName} กลับมาแล้ว`, 'info');
         }
-
-        // Associate connection with player if possible (hard with PeerJS without metadata)
-        // But we have conn object.
 
         // Update UI
         UI.updateLobbyPlayers(GameState.state.players);
-        UI.showToast(`${playerName} เข้าร่วมห้อง`, 'info');
 
         // Broadcast updated state to ALL
         this.broadcastState();
