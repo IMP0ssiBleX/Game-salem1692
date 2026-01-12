@@ -276,6 +276,18 @@ const Connection = {
                 this.onNightAction(data);
                 break;
 
+            case 'night_action':
+                this.onNightAction(data);
+                break;
+
+            case 'draw_cards':
+                this.onDrawCards(data);
+                break;
+
+            case 'end_turn':
+                this.onEndTurn(data);
+                break;
+
             case 'player_leave': // If we implement it
                 this.onPlayerLeave(data);
                 break;
@@ -400,6 +412,39 @@ const Connection = {
         const { actionType, targetId } = data;
         if (actionType === 'witch_kill') GameState.witchSelectTarget(targetId);
         else if (actionType === 'constable_protect') GameState.constableProtect(targetId);
+    },
+
+
+
+    onDrawCards(data) {
+        if (this.type !== this.TYPE.HOST) return;
+
+        // Calculate draw count based on character ability (Server Authoritative)
+        const player = GameState.getCurrentPlayer();
+        const drawCount = Characters.applyAbility(player.characterId, 'draw_count', GameState.state) || 2;
+
+        const result = GameState.drawCards(drawCount);
+
+        // Broadcast new state
+        this.broadcastState();
+
+        // Update Host UI logic because broadcast doesn't update self
+        this.updateUIForState();
+
+        // Also could broadcast specific event if needed, but state sync covers it
+        if (result.action === 'night') {
+            this.broadcast('game_message', { type: 'night_start' });
+            // Night start UI update if needed
+            this.updateUIForState();
+        }
+    },
+
+    onEndTurn(data) {
+        if (this.type !== this.TYPE.HOST) return;
+
+        GameState.endTurn();
+        this.broadcastState();
+        this.updateUIForState();
     },
 
     onPlayerLeave(data) {

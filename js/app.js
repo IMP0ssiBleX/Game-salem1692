@@ -452,7 +452,22 @@ const App = {
             `);
         }
 
-        // Draw cards
+        // --- NEW SYNCHRONIZATION LOGIC ---
+        if (!GameState.state.isHost) {
+            // If Client: Send request to Host
+            // We can optimistic update here if we want instant feel, but safest is to wait for sync
+            // For now, let's just send request and show "Waiting..." or simply assume it works
+            Connection.send('draw_cards');
+
+            // Optimistic update locally? 
+            // If we run drawCards() locally, we might get different cards than server if Deck isn't perfectly synced (RNG)
+            // Ideally Deck is on Host. Client just receives result.
+            // So: DO NOT run drawCards() locally for logic. Just wait for state update.
+            UI.showToast('กำลังจั่วการ์ด...', 'info');
+            return;
+        }
+
+        // If Host: Execute logic normally
         const result = GameState.drawCards(drawCount);
 
         if (result.action === 'night') {
@@ -685,7 +700,14 @@ const App = {
             return;
         }
 
-        // End turn
+        // --- NEW SYNCHRONIZATION LOGIC ---
+        if (!GameState.state.isHost) {
+            Connection.send('end_turn');
+            UI.showToast('จบเทิร์นแล้ว รอสักครู่...', 'info');
+            return;
+        }
+
+        // End turn (Host)
         const nextPlayer = GameState.endTurn();
 
         UI.showToast(`เทิร์นของ ${nextPlayer.name}`, 'info');
