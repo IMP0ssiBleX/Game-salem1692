@@ -100,9 +100,38 @@ io.on('connection', (socket) => {
     // Disconnect
     socket.on('disconnect', () => {
         console.log('User disconnected:', socket.id);
-        // Clean up rooms/players...
-        // For MVP, we just let the client handle timeouts/drops based on ping
-        // But ideally we notify the room
+
+        // Find keys of rooms ensuring we clean up correctly
+        // Ideally we stored roomCode on socket, but for now we search
+        // Optimization: In real app, store socket.roomCode
+
+        for (const roomCode in rooms) {
+            const room = rooms[roomCode];
+            const playerIndex = room.players.findIndex(p => p.id === socket.id);
+
+            if (playerIndex !== -1) {
+                const player = room.players[playerIndex];
+                console.log(`Player ${player.data.name} left room ${roomCode}`);
+
+                // Remove player
+                room.players.splice(playerIndex, 1);
+
+                // Notify room
+                io.to(roomCode).emit('player_left', {
+                    socketId: socket.id
+                });
+
+                // If room is empty, delete it? 
+                // Keep for now or delete if host left?
+                // For MVP, if Host leaves, room might break, but let's just keep logic simple.
+            }
+
+            if (room.host === socket.id) {
+                console.log(`Host left room ${roomCode}`);
+                // Optional: Notify room that host left
+                // io.to(roomCode).emit('host_left');
+            }
+        }
     });
 });
 

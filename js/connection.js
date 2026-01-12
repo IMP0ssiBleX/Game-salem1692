@@ -98,12 +98,32 @@ const Connection = {
                     }, 2000);
                 });
 
-                // Player Joined (Host & Players)
                 this.socket.on('player_joined', ({ socketId, playerData }) => {
                     this.onPlayerJoin({
                         ...playerData,
                         id: playerData.id || socketId
                     }, socketId);
+                });
+
+                // Player Left
+                this.socket.on('player_left', ({ socketId }) => {
+                    console.log('Player left:', socketId);
+
+                    // Remove from GameState
+                    if (window.GameState) {
+                        const player = GameState.state.players.find(p => p.id === socketId || (p.id.includes(socketId))); // Try to match ID
+
+                        if (player) {
+                            UI.showToast(`${player.name} ออกจากห้อง`, 'info');
+                            GameState.removePlayer(player.id);
+                            UI.updateLobbyPlayers(GameState.state.players);
+
+                            // If Host, we might need to re-check character selection
+                            if (GameState.state.isHost && GameState.state.phase === 'character_select') {
+                                if (window.App) App.checkAllCharactersSelected();
+                            }
+                        }
+                    }
                 });
 
                 this.socket.on('error', (data) => {

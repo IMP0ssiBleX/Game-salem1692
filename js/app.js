@@ -306,6 +306,16 @@ const App = {
 
         const allSelected = GameState.state.players.every(p => p.characterId);
 
+        if (!allSelected) {
+            // Log who is missing
+            const missing = GameState.state.players.filter(p => !p.characterId).map(p => p.name);
+            console.log('Waiting for:', missing.join(', '));
+
+            // Only show toast occasionally or if explicitly checking?
+            // Let's rely on the "Character Selected" toast from individual players to keep it alive.
+            return;
+        }
+
         if (allSelected) {
             // Start playing phase
             GameState.startPlaying();
