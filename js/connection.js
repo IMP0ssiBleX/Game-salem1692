@@ -15,7 +15,10 @@ const Connection = {
     socket: null,      // Socket.IO client
     roomCode: null,
     isConnected: false,
-    serverUrl: 'http://localhost:3000', // Default local server
+    // Auto-detect server URL
+    // If running on a web server (http/https), use that origin. 
+    // If running locally via file://, fallback to localhost:3000
+    serverUrl: (window.location.protocol === 'file:') ? 'http://localhost:3000' : window.location.origin,
 
     // Message handlers
     handlers: {},
