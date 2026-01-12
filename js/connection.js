@@ -154,7 +154,7 @@ const Connection = {
                         reject(new Error('Connection timed out'));
                         this.leaveRoom();
                     }
-                }, 20000);
+                }, 60000);
 
                 this.peer.on('open', (id) => {
                     console.log(`Connected to PeerServer as ${id}`);
