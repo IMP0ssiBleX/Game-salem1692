@@ -11,25 +11,40 @@ const App = {
 
     // Initialize app
     async init() {
-        console.log('Salem 1692 - Initializing...');
+        try {
+            console.log('Salem 1692 - Initializing...');
 
-        // Initialize modules
-        GameState.init();
-        Screens.init();
-        UI.init();
-        Connection.init();
-        if (window.location.protocol === 'file:') {
-            UI.showToast('⚠️ คำเตือน: การเปิดไฟล์โดยตรงอาจทำให้เล่นออนไลน์ไม่ได้', 'error', 10000);
-            UI.showToast('แนะนำให้ใช้ Local Server หรืออัปโหลดขึ้นเว็บ', 'info', 10000);
+            // Initialize modules
+            if (window.GameState) GameState.init();
+            if (window.Screens) Screens.init();
+            if (window.UI) UI.init();
+            if (window.Connection) Connection.init();
+
+            if (window.location.protocol === 'file:') {
+                // UI.showToast might fail if UI init failed
+                if (window.UI) {
+                    UI.showToast('⚠️ คำเตือน: การเปิดไฟล์โดยตรงอาจทำให้เล่นออนไลน์ไม่ได้', 'error', 10000);
+                    UI.showToast('แนะนำให้ใช้ Local Server หรืออัปโหลดขึ้นเว็บ', 'info', 10000);
+                }
+            }
+
+            if (window.GameLog) GameLog.init();
+
+            // Show menu after loading
+            await Utils.delay(1000);
+
+            if (window.Screens) {
+                Screens.show('menu', { animate: true });
+            } else {
+                console.error('Screens module not found');
+                alert('Error: Screens module not loaded');
+            }
+
+            console.log('Salem 1692 - Ready!');
+        } catch (err) {
+            console.error('Initialization Error:', err);
+            alert('Game Error: ' + err.message + '\n' + err.stack);
         }
-
-        GameLog.init();
-
-        // Show menu after loading
-        await Utils.delay(1500);
-        Screens.show('menu', { animate: true });
-
-        console.log('Salem 1692 - Ready!');
     },
 
     // Create a new room
