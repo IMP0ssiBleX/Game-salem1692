@@ -71,7 +71,7 @@ const App = {
     },
 
     // Join a room
-    joinRoom() {
+    async joinRoom() {
         const playerName = UI.elements.playerNameInput.value.trim();
         const roomCode = UI.elements.roomCodeInput.value.trim().toUpperCase();
 
@@ -94,19 +94,41 @@ const App = {
         const player = GameState.addPlayer(playerName, false);
         GameState.state.localPlayerId = player.id;
 
-        // Join room connection
-        const joined = Connection.joinRoom(roomCode);
+        // Show connecting state
+        UI.showToast('กำลังเชื่อมต่อ... กรุณารอสักครู่', 'info');
+        const joinBtn = UI.elements.btnConfirmJoin;
+        const originalText = joinBtn.textContent;
+        joinBtn.textContent = 'Connecting...';
+        joinBtn.disabled = true;
 
-        if (joined) {
-            // Save player name for next time
+        try {
+            // Join room connection
+            await Connection.joinRoom(roomCode);
+
+            // Success
             Utils.saveToStorage('playerName', playerName);
-
-            // Show lobby
             Screens.show('lobby');
+            UI.showToast(`เข้าร่วมห้อง ${roomCode} สำเร็จ!`, 'success');
 
-            UI.showToast(`เข้าร่วมห้อง ${roomCode}`, 'success');
-        } else {
-            UI.showToast('ไม่พบห้องนี้', 'error');
+        } catch (err) {
+            // Error handling
+            console.error('Join failed:', err);
+            let msg = 'ไม่สามารถเชื่อมต่อได้';
+
+            if (err.type === 'peer-unavailable') {
+                msg = 'ไม่พบรหัสห้องนี้ (หรือโฮสต์ยังไม่ได้สร้างห้อง)';
+            } else if (err.message === 'Connection timed out') {
+                msg = 'หมดเวลาเชื่อมต่อ (อินเทอร์เน็ตช้าหรือโฮสต์ไม่อยู่)';
+            }
+
+            UI.showToast(msg, 'error');
+
+            // Clean up
+            Connection.leaveRoom();
+        } finally {
+            // Reset button
+            joinBtn.textContent = originalText;
+            joinBtn.disabled = false;
         }
     },
 

@@ -132,56 +132,74 @@ const Connection = {
 
     // Join a room (for player)
     joinRoom(roomCode) {
-        this.type = this.TYPE.PLAYER;
-        this.roomCode = roomCode;
+        return new Promise((resolve, reject) => {
+            this.type = this.TYPE.PLAYER;
+            this.roomCode = roomCode;
 
-        try {
-            // Create anonymous peer
-            this.peer = new Peer(null, this.peerConfig);
+            try {
+                // Create anonymous peer
+                this.peer = new Peer(null, this.peerConfig);
 
-            this.peer.on('open', (id) => {
-                console.log(`Connected to PeerServer as ${id}`);
+                // Timeout safety (10 seconds)
+                const connectionTimeout = setTimeout(() => {
+                    if (!this.isConnected) {
+                        reject(new Error('Connection timed out'));
+                        this.leaveRoom();
+                    }
+                }, 10000);
 
-                // Connect to host
-                const hostId = this.prefix + roomCode;
-                this.conn = this.peer.connect(hostId);
+                this.peer.on('open', (id) => {
+                    console.log(`Connected to PeerServer as ${id}`);
 
-                this.conn.on('open', () => {
-                    this.isConnected = true;
-                    console.log('Connected to Host');
+                    // Connect to host
+                    const hostId = this.prefix + roomCode;
+                    this.conn = this.peer.connect(hostId);
 
-                    // Send join message
-                    this.send('player_join', {
-                        playerId: GameState.state.localPlayerId,
-                        playerName: GameState.getLocalPlayer() ? GameState.getLocalPlayer().name : 'Unknown'
+                    this.conn.on('open', () => {
+                        clearTimeout(connectionTimeout);
+                        this.isConnected = true;
+                        console.log('Connected to Host');
+
+                        // Send join message
+                        this.send('player_join', {
+                            playerId: GameState.state.localPlayerId,
+                            playerName: GameState.getLocalPlayer() ? GameState.getLocalPlayer().name : 'Unknown'
+                        });
+
+                        // Force state sync request if needed, but Host should send it on join.
+                        resolve(true);
+                    });
+
+                    this.conn.on('data', (data) => {
+                        this.handleMessage(data);
+                    });
+
+                    this.conn.on('close', () => {
+                        UI.showToast('การเชื่อมต่อกับโฮสต์หลุด', 'error');
+                        this.leaveRoom();
+                        // Force back to menu to avoid stuck state
+                        if (window.Screens) Screens.show('menu');
+                        if (window.GameState) GameState.init();
+                    });
+
+                    this.conn.on('error', (err) => {
+                        console.error('Connection error:', err);
+                        clearTimeout(connectionTimeout);
+                        reject(err);
                     });
                 });
 
-                this.conn.on('data', (data) => {
-                    this.handleMessage(data);
+                this.peer.on('error', (err) => {
+                    console.error('Peer error:', err);
+                    clearTimeout(connectionTimeout);
+                    reject(err);
                 });
 
-                this.conn.on('close', () => {
-                    UI.showToast('การเชื่อมต่อกับโฮสต์หลุด', 'error');
-                    this.leaveRoom();
-                });
-
-                this.conn.on('error', (err) => {
-                    console.error('Connection error:', err);
-                    UI.showToast('ไม่สามารถเชื่อมต่อห้องได้', 'error');
-                });
-            });
-
-            this.peer.on('error', (err) => {
-                console.error('Peer error:', err);
-                UI.showToast('ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้', 'error');
-            });
-
-            return true;
-        } catch (e) {
-            console.error(e);
-            return false;
-        }
+            } catch (e) {
+                console.error(e);
+                reject(e);
+            }
+        });
     },
 
     // Leave room
