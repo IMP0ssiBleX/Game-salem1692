@@ -17,8 +17,10 @@ const io = new Server(server, {
     }
 });
 
-// Serve static files (for local testing)
-app.use(express.static(path.join(__dirname, '.')));
+// Serve static files
+app.use(express.static(__dirname));
+app.use('/css', express.static(path.join(__dirname, 'css')));
+app.use('/js', express.static(path.join(__dirname, 'js')));
 
 // Game State
 const rooms = {};
