@@ -18,6 +18,11 @@ const App = {
         Screens.init();
         UI.init();
         Connection.init();
+        if (window.location.protocol === 'file:') {
+            UI.showToast('⚠️ คำเตือน: การเปิดไฟล์โดยตรงอาจทำให้เล่นออนไลน์ไม่ได้', 'error', 10000);
+            UI.showToast('แนะนำให้ใช้ Local Server หรืออัปโหลดขึ้นเว็บ', 'info', 10000);
+        }
+
         GameLog.init();
 
         // Show menu after loading
