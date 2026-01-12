@@ -71,6 +71,16 @@ const Connection = {
                     this.roomCode = roomCode;
                     this.type = this.TYPE.HOST;
                     UI.showToast(`ห้องสร้างเสร็จแล้ว! รหัส: ${roomCode}`, 'success');
+
+                    // Start Heartbeat (Broadcast state every 3 seconds in lobby)
+                    if (this.heartbeatInterval) clearInterval(this.heartbeatInterval);
+                    this.heartbeatInterval = setInterval(() => {
+                        if (this.type === this.TYPE.HOST && GameState.state.phase === 'lobby') {
+                            this.broadcastState();
+                        } else {
+                            clearInterval(this.heartbeatInterval);
+                        }
+                    }, 3000);
                 });
 
                 this.socket.on('joined_room', ({ roomCode }) => {
@@ -79,17 +89,21 @@ const Connection = {
                     this.type = this.TYPE.PLAYER;
                     UI.showToast('เข้าร่วมห้องสำเร็จ!', 'success');
 
-                    // Request state sync from host ?? Host should see 'player_joined' and send state.
+                    // Request state sync from host explicitly if not received
+                    setTimeout(() => {
+                        if (GameState.state.players.length <= 1) { // Still only me?
+                            console.log('Requesting state from host...');
+                            this.send('request_state');
+                        }
+                    }, 2000);
                 });
 
-                // Host Specific: Player Joined
+                // Player Joined (Host & Players)
                 this.socket.on('player_joined', ({ socketId, playerData }) => {
-                    if (this.type === this.TYPE.HOST) {
-                        this.onPlayerJoin({
-                            ...playerData,
-                            id: playerData.id || socketId // Use provided ID or socket ID
-                        }, socketId);
-                    }
+                    this.onPlayerJoin({
+                        ...playerData,
+                        id: playerData.id || socketId
+                    }, socketId);
                 });
 
                 this.socket.on('error', (data) => {
@@ -246,6 +260,12 @@ const Connection = {
                 this.onPlayerLeave(data);
                 break;
 
+            case 'request_state':
+                if (this.type === this.TYPE.HOST) {
+                    this.sendState(senderId);
+                }
+                break;
+
             default:
                 if (this.handlers[type]) {
                     this.handlers[type](data);
@@ -255,9 +275,10 @@ const Connection = {
 
     // --- GAME LOGIC HANDLERS (Same as before) ---
 
-    // Handle player join (Host side)
+    // Handle player join (Host & Player)
     onPlayerJoin(playerData, socketId) {
-        if (this.type !== this.TYPE.HOST) return;
+        // If I am the one who joined, ignore (already added self)
+        if (playerData.id === GameState.state.localPlayerId) return;
 
         const { id, name } = playerData;
         console.log(`Player Joined: ${name} (${id})`);
@@ -266,20 +287,18 @@ const Connection = {
         let player = GameState.getPlayer(id);
         if (!player) {
             player = GameState.createPlayer(id, name, false);
-            // player.socketId = socketId; // We might need to track this map if IDs differ
             GameState.state.players.push(player);
             UI.showToast(`ผู้เล่นใหม่เข้าร่วม: ${name}`, 'success');
         } else {
-            UI.showToast(`${name} กลับมาแล้ว`, 'info');
+            // Already exists
         }
 
         UI.updateLobbyPlayers(GameState.state.players);
 
-        // Send state to THIS player
-        this.sendState(socketId);
-
-        // Broadcast to others
-        this.broadcastState();
+        // Host: Sync state to everyone when someone joins
+        if (this.type === this.TYPE.HOST) {
+            this.broadcastState();
+        }
     },
 
     onStateSync(data) {

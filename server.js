@@ -62,8 +62,8 @@ io.on('connection', (socket) => {
 
         console.log(`Player ${playerData.name} joined room ${roomCode}`);
 
-        // Notify Host (Host handles the logic)
-        io.to(room.host).emit('player_joined', {
+        // Notify EVERYONE in the room (so players see each other immediately)
+        io.to(roomCode).emit('player_joined', {
             socketId: socket.id,
             playerData
         });
