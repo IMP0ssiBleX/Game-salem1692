@@ -1,0 +1,424 @@
+/* =============================================
+   Salem 1692 - Card Styles
+   ============================================= */
+
+/* Base Card Styles */
+.card {
+    position: relative;
+    width: 100px;
+    height: 140px;
+    border-radius: var(--radius-lg);
+    cursor: pointer;
+    transition: all var(--transition-base);
+    transform-style: preserve-3d;
+    perspective: 1000px;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+}
+
+.card.selected {
+    transform: translateY(-10px);
+    box-shadow: 0 10px 30px rgba(212, 165, 116, 0.4);
+}
+
+.card-inner {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    transform-style: preserve-3d;
+    transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.card.flipped .card-inner {
+    transform: rotateY(180deg);
+}
+
+.card-front,
+.card-back {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border-radius: var(--radius-lg);
+    backface-visibility: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-sm);
+    overflow: hidden;
+}
+
+/* Card front is visible by default */
+.card-front {
+    transform: rotateY(0deg);
+}
+
+/* Card back is hidden behind */
+.card-back {
+    transform: rotateY(180deg);
+}
+
+/* Card Back Design */
+.card-back {
+    background: var(--gradient-mysterious);
+    border: 2px solid var(--color-gold);
+}
+
+.card-back::before {
+    content: '';
+    position: absolute;
+    width: 60%;
+    height: 60%;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='45' fill='none' stroke='%23d4a574' stroke-width='1' opacity='0.3'/%3E%3Cpath d='M50 5 L61 40 L95 40 L68 60 L79 95 L50 75 L21 95 L32 60 L5 40 L39 40 Z' fill='none' stroke='%23d4a574' stroke-width='1' opacity='0.5'/%3E%3C/svg%3E") center/contain no-repeat;
+    opacity: 0.4;
+}
+
+.card-back-text {
+    font-family: var(--font-display);
+    font-size: var(--text-xs);
+    color: var(--color-gold);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    position: relative;
+    z-index: 1;
+}
+
+/* Playing Card Types */
+
+/* Red Cards - Accusation */
+.card.card-red .card-front {
+    background: var(--gradient-card-red);
+    border: 2px solid var(--card-red-light);
+}
+
+.card.card-red:hover {
+    box-shadow: 0 8px 25px rgba(139, 38, 53, 0.5);
+}
+
+/* Green Cards - Helper */
+.card.card-green .card-front {
+    background: var(--gradient-card-green);
+    border: 2px solid var(--card-green-light);
+}
+
+.card.card-green:hover {
+    box-shadow: 0 8px 25px rgba(45, 90, 61, 0.5);
+}
+
+/* Blue Cards - Persistent */
+.card.card-blue .card-front {
+    background: var(--gradient-card-blue);
+    border: 2px solid var(--card-blue-light);
+}
+
+.card.card-blue:hover {
+    box-shadow: 0 8px 25px rgba(44, 74, 110, 0.5);
+}
+
+/* Black Cards - Event */
+.card.card-black .card-front {
+    background: linear-gradient(145deg, #2a2a2a 0%, #0a0a0a 100%);
+    border: 2px solid #444;
+}
+
+.card.card-black::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at center, transparent 30%, rgba(0, 0, 0, 0.5) 100%);
+    pointer-events: none;
+}
+
+/* Tryal Cards */
+.card.card-tryal .card-front {
+    background: linear-gradient(145deg, #3d2d1a 0%, #2a1f12 100%);
+    border: 2px solid var(--color-gold);
+}
+
+.card.card-tryal.witch .card-front {
+    background: linear-gradient(145deg, #4a0e4e 0%, #2a0830 100%);
+    border-color: #8b008b;
+    animation: witchGlow 2s ease-in-out infinite;
+}
+
+@keyframes witchGlow {
+
+    0%,
+    100% {
+        box-shadow: 0 0 10px var(--color-witch-glow);
+    }
+
+    50% {
+        box-shadow: 0 0 25px var(--color-witch-glow);
+    }
+}
+
+.card.card-tryal.constable .card-front {
+    background: linear-gradient(145deg, #1e3a5f 0%, #0f1d30 100%);
+    border-color: var(--color-blue-light);
+}
+
+/* Card Content */
+.card-icon {
+    font-size: 2rem;
+    margin-bottom: var(--space-xs);
+}
+
+.card-name {
+    font-family: var(--font-display);
+    font-size: var(--text-xs);
+    font-weight: 600;
+    text-align: center;
+    color: var(--color-text-primary);
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+}
+
+.card-value {
+    position: absolute;
+    top: var(--space-xs);
+    right: var(--space-xs);
+    font-family: var(--font-display);
+    font-size: var(--text-sm);
+    font-weight: 700;
+    color: var(--color-text-primary);
+    background: rgba(0, 0, 0, 0.3);
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.card-description {
+    font-size: 0.6rem;
+    text-align: center;
+    color: var(--color-text-secondary);
+    margin-top: var(--space-xs);
+    line-height: 1.2;
+}
+
+/* Card Size Variants */
+.card.card-sm {
+    width: 70px;
+    height: 98px;
+}
+
+.card.card-sm .card-icon {
+    font-size: 1.5rem;
+}
+
+.card.card-sm .card-name {
+    font-size: 0.6rem;
+}
+
+.card.card-lg {
+    width: 140px;
+    height: 196px;
+}
+
+.card.card-lg .card-icon {
+    font-size: 3rem;
+}
+
+.card.card-lg .card-name {
+    font-size: var(--text-base);
+}
+
+.card.card-lg .card-description {
+    font-size: var(--text-xs);
+}
+
+/* Card Stack */
+.card-stack {
+    position: relative;
+    width: 100px;
+    height: 140px;
+}
+
+.card-stack .card {
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+.card-stack .card:nth-child(1) {
+    transform: translate(0, 0);
+}
+
+.card-stack .card:nth-child(2) {
+    transform: translate(2px, 2px);
+}
+
+.card-stack .card:nth-child(3) {
+    transform: translate(4px, 4px);
+}
+
+/* Hand Cards Container */
+.hand-cards {
+    display: flex;
+    gap: var(--space-sm);
+    overflow-x: auto;
+    padding: var(--space-md) 0;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+}
+
+.hand-cards .card {
+    flex-shrink: 0;
+    scroll-snap-align: center;
+}
+
+/* Tryal Cards Container */
+.tryal-cards {
+    display: flex;
+    gap: var(--space-md);
+    justify-content: center;
+    flex-wrap: wrap;
+    padding: var(--space-md);
+}
+
+/* Card Revealed Effect */
+.card.revealed {
+    animation: cardReveal 0.8s ease-out;
+}
+
+@keyframes cardReveal {
+    0% {
+        transform: rotateY(0deg) scale(1);
+    }
+
+    50% {
+        transform: rotateY(90deg) scale(1.1);
+    }
+
+    100% {
+        transform: rotateY(180deg) scale(1);
+    }
+}
+
+/* Card Eliminated */
+.card.eliminated {
+    filter: grayscale(100%);
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+.card.eliminated::after {
+    content: '✗';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 3rem;
+    color: var(--color-blood);
+    text-shadow: 0 0 10px var(--color-blood);
+}
+
+/* Accusation Cards on Player */
+.accusation-stack {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2px;
+    padding: var(--space-xs);
+    background: rgba(139, 38, 53, 0.2);
+    border-radius: var(--radius-sm);
+    max-width: 100px;
+}
+
+.accusation-marker {
+    width: 12px;
+    height: 12px;
+    background: var(--color-blood);
+    border-radius: 2px;
+    box-shadow: 0 0 5px var(--color-blood-glow);
+}
+
+/* Blue Card Attached */
+.attached-cards {
+    display: flex;
+    gap: var(--space-xs);
+    margin-top: var(--space-xs);
+}
+
+.attached-card {
+    width: 30px;
+    height: 42px;
+    border-radius: var(--radius-sm);
+    background: var(--gradient-card-blue);
+    border: 1px solid var(--card-blue-light);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+}
+
+/* Kill Card */
+.card.card-kill .card-front {
+    background: linear-gradient(145deg, #1a0a0a 0%, #0a0505 100%);
+    border: 2px solid #500;
+}
+
+.card.card-kill .card-icon {
+    color: var(--color-blood);
+    text-shadow: 0 0 10px var(--color-blood);
+}
+
+/* Character Card */
+.character-card {
+    position: relative;
+    width: 100%;
+    max-width: 280px;
+    background: var(--color-bg-card);
+    border-radius: var(--radius-xl);
+    border: 2px solid var(--color-bg-elevated);
+    overflow: hidden;
+    cursor: pointer;
+    transition: all var(--transition-base);
+}
+
+.character-card:hover {
+    transform: translateY(-5px);
+    border-color: var(--color-gold);
+    box-shadow: var(--shadow-lg), var(--shadow-glow-gold);
+}
+
+.character-card.selected {
+    border-color: var(--color-gold);
+    box-shadow: 0 0 30px var(--color-gold-glow);
+}
+
+.character-portrait {
+    width: 100%;
+    height: 160px;
+    background: var(--gradient-mysterious);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.character-portrait .portrait-icon {
+    font-size: 4rem;
+    opacity: 0.8;
+}
+
+.character-info {
+    padding: var(--space-md);
+}
+
+.character-name {
+    font-family: var(--font-display);
+    font-size: var(--text-lg);
+    color: var(--color-gold);
+    margin-bottom: var(--space-xs);
+}
+
+.character-ability {
+    font-size: var(--text-sm);
+    color: var(--color-text-secondary);
+    line-height: 1.4;
+}

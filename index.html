@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Salem 1692 - เกมล่าแม่มด</title>
+    <meta name="description" content="เกม Social Deduction ยุคล่าแม่มด สำหรับเล่นกับเพื่อน 4-12 คน">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Sarabun:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="css/index.css">
+    <link rel="stylesheet" href="css/cards.css">
+    <link rel="stylesheet" href="css/screens.css">
+    <link rel="stylesheet" href="css/animations.css">
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+</head>
+
+<body>
+    <div id="app">
+        <!-- Loading Screen -->
+        <div id="loading-screen" class="screen active">
+            <div class="loading-content">
+                <div class="pentagram-loader"></div>
+                <h1 class="game-title">Salem</h1>
+                <p class="game-subtitle">1692</p>
+                <p class="loading-text">กำลังโหลด...</p>
+            </div>
+        </div>
+
+        <!-- Main Menu Screen -->
+        <div id="menu-screen" class="screen">
+            <div class="menu-bg">
+                <div class="fog fog-1"></div>
+                <div class="fog fog-2"></div>
+            </div>
+            <div class="menu-content">
+                <div class="logo-container">
+                    <div class="candle-glow"></div>
+                    <h1 class="game-title glitch" data-text="Salem">Salem</h1>
+                    <p class="game-subtitle">1692</p>
+                    <p class="tagline">ล่าแม่มด หรือ ถูกล่า?</p>
+                </div>
+                <div class="menu-buttons">
+                    <button class="btn btn-primary" id="btn-create-room">
+                        <span class="btn-icon">🕯️</span>
+                        <span class="btn-text">สร้างห้อง</span>
+                    </button>
+                    <button class="btn btn-secondary" id="btn-join-room">
+                        <span class="btn-icon">🚪</span>
+                        <span class="btn-text">เข้าร่วมห้อง</span>
+                    </button>
+                    <button class="btn btn-ghost" id="btn-how-to-play">
+                        <span class="btn-icon">📜</span>
+                        <span class="btn-text">วิธีเล่น</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Create Room Screen -->
+        <div id="create-room-screen" class="screen">
+            <div class="screen-header">
+                <button class="btn-back" id="btn-back-create">
+                    <span>←</span>
+                </button>
+                <h2>สร้างห้อง</h2>
+            </div>
+            <div class="screen-content">
+                <div class="form-group">
+                    <label for="host-name">ชื่อของคุณ</label>
+                    <input type="text" id="host-name" placeholder="ใส่ชื่อ..." maxlength="20">
+                </div>
+                <div class="form-group">
+                    <label>โหมด</label>
+                    <div class="toggle-group">
+                        <button class="toggle-btn active" data-mode="host">
+                            <span class="toggle-icon">📺</span>
+                            <span class="toggle-label">หน้าจอกลาง</span>
+                        </button>
+                        <button class="toggle-btn" data-mode="player">
+                            <span class="toggle-icon">📱</span>
+                            <span class="toggle-label">ผู้เล่น</span>
+                        </button>
+                    </div>
+                </div>
+                <button class="btn btn-primary btn-full" id="btn-confirm-create">
+                    <span>สร้างห้อง</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Join Room Screen -->
+        <div id="join-room-screen" class="screen">
+            <div class="screen-header">
+                <button class="btn-back" id="btn-back-join">
+                    <span>←</span>
+                </button>
+                <h2>เข้าร่วมห้อง</h2>
+            </div>
+            <div class="screen-content">
+                <div class="form-group">
+                    <label for="player-name">ชื่อของคุณ</label>
+                    <input type="text" id="player-name" placeholder="ใส่ชื่อ..." maxlength="20">
+                </div>
+                <div class="form-group">
+                    <label for="room-code">รหัสห้อง</label>
+                    <div class="code-input-group">
+                        <input type="text" id="room-code" placeholder="XXXX" maxlength="4" class="code-input">
+                    </div>
+                </div>
+                <button class="btn btn-primary btn-full" id="btn-confirm-join">
+                    <span>เข้าร่วม</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Lobby Screen -->
+        <div id="lobby-screen" class="screen">
+            <div class="lobby-header">
+                <div class="room-info">
+                    <span class="room-label">รหัสห้อง</span>
+                    <span class="room-code" id="lobby-room-code">ABCD</span>
+                </div>
+                <div class="player-count">
+                    <span id="lobby-player-count">0</span>/12 ผู้เล่น
+                </div>
+            </div>
+            <div class="lobby-content">
+                <div class="qr-section" id="qr-section">
+                    <div class="qr-code" id="qr-code"></div>
+                    <p class="qr-hint">สแกน QR เพื่อเข้าร่วม</p>
+                </div>
+                <div class="players-grid" id="players-grid">
+                    <!-- Player cards will be inserted here -->
+                </div>
+            </div>
+            <div class="lobby-footer">
+                <button class="btn btn-ghost" id="btn-add-bot">
+                    <span>🤖 เพิ่มบอท</span>
+                </button>
+                <button class="btn btn-danger" id="btn-leave-room">
+                    <span>ออกจากห้อง</span>
+                </button>
+                <button class="btn btn-primary" id="btn-start-game" disabled>
+                    <span>เริ่มเกม</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Character Select Screen -->
+        <div id="character-screen" class="screen">
+            <div class="screen-header">
+                <h2>เลือกตัวละคร</h2>
+                <div class="timer" id="char-timer">30</div>
+            </div>
+            <div class="characters-grid" id="characters-grid">
+                <!-- Character cards will be inserted here -->
+            </div>
+            <div class="selected-character" id="selected-character">
+                <div class="character-portrait"></div>
+                <div class="character-info">
+                    <h3 class="character-name"></h3>
+                    <p class="character-ability"></p>
+                </div>
+            </div>
+            <button class="btn btn-primary btn-full" id="btn-confirm-character">
+                <span>ยืนยัน</span>
+            </button>
+        </div>
+
+        <!-- Host Game Screen -->
+        <div id="host-screen" class="screen">
+            <div class="host-header">
+                <div class="game-phase" id="host-phase">
+                    <span class="phase-icon">☀️</span>
+                    <span class="phase-text">กลางวัน</span>
+                </div>
+                <div class="turn-info">
+                    <span>เทิร์นของ</span>
+                    <span class="current-player" id="host-current-player">-</span>
+                </div>
+                <div class="deck-count">
+                    <span class="deck-icon">🃏</span>
+                    <span id="host-deck-count">0</span>
+                </div>
+            </div>
+            <div class="host-content">
+                <div class="players-circle" id="host-players-circle">
+                    <!-- Player positions will be inserted here -->
+                </div>
+                <div class="center-area">
+                    <div class="event-display" id="host-event">
+                        <p class="event-text">รอผู้เล่นเลือกตัวละคร...</p>
+                    </div>
+                </div>
+            </div>
+            <div class="revealed-cards" id="revealed-cards">
+                <!-- Revealed Tryal cards will be shown here -->
+            </div>
+            <!-- Game Activity Log -->
+            <div class="game-log-container">
+                <div class="game-log-header">
+                    <span class="log-icon">📜</span>
+                    <span>บันทึกเหตุการณ์</span>
+                </div>
+                <div class="game-log">
+                    <div class="log-entry log-system">
+                        <span class="log-time">--:--</span>
+                        <span class="log-message">รอเริ่มเกม...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Player Game Screen -->
+        <div id="player-screen" class="screen">
+            <!-- Game Activity Log (Player) -->
+            <div class="game-log-container player-log">
+                <div class="game-log-header">
+                    <span class="log-icon">📜</span>
+                    <span>บันทึกเหตุการณ์</span>
+                </div>
+                <div class="game-log">
+                    <div class="log-entry log-system">
+                        <span class="log-time">--:--</span>
+                        <span class="log-message">รอเริ่มเกม...</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="player-header">
+                <div class="player-info-bar">
+                    <div class="player-avatar" id="player-avatar"></div>
+                    <div class="player-details">
+                        <span class="player-name" id="player-name-display">ผู้เล่น</span>
+                        <span class="player-character" id="player-character-display">-</span>
+                    </div>
+                </div>
+                <div class="accusation-meter">
+                    <div class="meter-fill" id="accusation-fill" style="width: 0%"></div>
+                    <span class="meter-text"><span id="accusation-count">0</span>/7</span>
+                </div>
+                <div class="deck-status-player">
+                    <span class="deck-icon">🃏</span>
+                    <span id="player-deck-count">0</span>
+                </div>
+            </div>
+            <div class="player-content">
+                <!-- Tryal Cards Area -->
+                <div class="tryal-area" id="tryal-area">
+                    <h3 class="area-title">การ์ด Tryal ของคุณ</h3>
+                    <div class="tryal-cards" id="tryal-cards">
+                        <!-- Tryal cards will be inserted here -->
+                    </div>
+                </div>
+                <!-- Hand Cards Area -->
+                <div class="hand-area" id="hand-area">
+                    <h3 class="area-title">การ์ดในมือ</h3>
+                    <div class="hand-cards" id="hand-cards">
+                        <!-- Hand cards will be inserted here -->
+                    </div>
+                </div>
+            </div>
+            <div class="player-actions" id="player-actions">
+                <button class="btn btn-action" id="btn-draw-cards" disabled>
+                    <span class="btn-icon">🃏</span>
+                    <span>จั่วการ์ด</span>
+                </button>
+                <button class="btn btn-action" id="btn-end-turn" disabled>
+                    <span class="btn-icon">✓</span>
+                    <span>จบเทิร์น</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Night Phase Screen -->
+        <div id="night-screen" class="screen">
+            <div class="night-overlay">
+                <div class="moon"></div>
+                <div class="stars"></div>
+            </div>
+            <div class="night-content">
+                <h2 class="night-title">🌙 กลางคืน</h2>
+                <p class="night-instruction" id="night-instruction">ปิดตาทุกคน...</p>
+                <div class="night-action-area" id="night-action-area">
+                    <!-- Night action UI will be inserted here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Game End Screen -->
+        <div id="end-screen" class="screen">
+            <div class="end-content">
+                <div class="winner-announcement">
+                    <h2 id="winner-title">ชาวบ้านชนะ!</h2>
+                    <p id="winner-subtitle">แม่มดถูกเปิดเผยทั้งหมดแล้ว</p>
+                </div>
+                <div class="final-reveal" id="final-reveal">
+                    <!-- All player roles will be revealed here -->
+                </div>
+                <div class="end-actions">
+                    <button class="btn btn-primary" id="btn-play-again">
+                        <span>เล่นอีกครั้ง</span>
+                    </button>
+                    <button class="btn btn-ghost" id="btn-back-menu">
+                        <span>กลับเมนูหลัก</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- How To Play Screen -->
+        <div id="howto-screen" class="screen">
+            <div class="screen-header">
+                <button class="btn-back" id="btn-back-howto">
+                    <span>←</span>
+                </button>
+                <h2>วิธีเล่น</h2>
+            </div>
+            <div class="howto-content">
+                <div class="howto-section">
+                    <h3>🎯 เป้าหมาย</h3>
+                    <div class="howto-cards">
+                        <div class="howto-card villager">
+                            <span class="role-icon">👥</span>
+                            <h4>ชาวบ้าน</h4>
+                            <p>เปิดเผยการ์ด Witch ของแม่มดทั้งหมดให้ได้</p>
+                        </div>
+                        <div class="howto-card witch">
+                            <span class="role-icon">🧙‍♀️</span>
+                            <h4>แม่มด</h4>
+                            <p>กำจัดชาวบ้านทั้งหมด หรืออยู่รอดจนจบเกม</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="howto-section">
+                    <h3>🎮 การเล่น</h3>
+                    <ol class="howto-steps">
+                        <li><strong>จั่วการ์ด 2 ใบ</strong> จากสำรับกลาง</li>
+                        <li><strong>เล่นการ์ด</strong> ใส่ผู้เล่นคนอื่น (ไม่สามารถเล่นใส่ตัวเองได้)</li>
+                        <li>เมื่อถูกกล่าวหาครบ <strong>7 แต้ม</strong> จะถูกเปิด Tryal Card</li>
+                        <li>ถ้าเปิดเจอ <strong>Witch</strong> แม่มดคนนั้นถูกกำจัด!</li>
+                    </ol>
+                </div>
+                <div class="howto-section">
+                    <h3>🌙 กลางคืน</h3>
+                    <p>เมื่อจั่วการ์ด Night จะเข้าสู่ช่วงกลางคืน:</p>
+                    <ul>
+                        <li>ทุกคนปิดตา</li>
+                        <li>แม่มดลืมตาและเลือกสังหารเหยื่อ 1 คน</li>
+                        <li>Constable สามารถปกป้องผู้เล่น 1 คน</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal for card actions -->
+        <div id="modal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 id="modal-title">เลือกเป้าหมาย</h3>
+                    <button class="modal-close" id="modal-close">×</button>
+                </div>
+                <div class="modal-body" id="modal-body">
+                    <!-- Modal content will be inserted here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Toast notifications -->
+        <div id="toast-container"></div>
+    </div>
+
+    <!-- Game Scripts -->
+    <script src="js/utils.js"></script>
+    <script src="js/cards.js"></script>
+    <script src="js/characters.js"></script>
+    <script src="js/gameState.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/screens.js"></script>
+    <script src="js/connection.js"></script>
+    <script src="js/gameLog.js"></script>
+    <script src="js/botAI.js"></script>
+    <script src="js/app.js"></script>
+</body>
+
+</html>
